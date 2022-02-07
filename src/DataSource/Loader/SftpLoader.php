@@ -94,8 +94,6 @@ class SftpLoader implements DataLoaderInterface
             Logger::error($e);
             throw new InvalidConfigurationException(sprintf('Could not copy from remote location `%s` to local tmp file `%s`', $loggingRemoteUrl, $this->importFilePath));
         }
-
-        throw new \Exception(sprintf('Could not find any files to load in path `%s`', $this->remotePath));
     }
 
     public function cleanup(): void

@@ -21,7 +21,7 @@ use Pimcore\Model\Element\ElementInterface;
 class IdStrategy extends AbstractLoad
 {
     /**
-     * @param $identifier
+     * @param string $identifier
      *
      * @return ElementInterface|null
      *
@@ -29,9 +29,8 @@ class IdStrategy extends AbstractLoad
      */
     public function loadElementByIdentifier($identifier): ?ElementInterface
     {
-        $className = $this->getClassName();
-
-        return $className::getById($identifier);
+        return $this->dataObjectLoader->loadById($identifier,
+                                                 $this->getClassName());
     }
 
     /**

@@ -154,7 +154,7 @@ class TransformationDataTypeService
 
     /**
      * @param string $classId
-     * @param $transformationTargetType
+     * @param array|string $transformationTargetType
      * @param bool $includeSystemRead
      * @param bool $includeSystemWrite
      * @param bool $includeAdvancedRelations
@@ -218,6 +218,14 @@ class TransformationDataTypeService
                     'localized' => false
                 ];
             }
+        }
+
+        if ($class->getAllowVariants()) {
+            $attributes['type'] = [
+                'key' => 'type',
+                'title' => 'SYSTEM Object Type ("variant"|"object")',
+                'localized' => false
+            ];
         }
 
         return array_values($attributes);

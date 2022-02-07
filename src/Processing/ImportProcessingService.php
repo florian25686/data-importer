@@ -83,7 +83,7 @@ class ImportProcessingService
     protected $resolverCache = [];
 
     /**
-     * @var MappingConfiguration[]
+     * @var MappingConfiguration[][]
      */
     protected $mappingConfigurationCache = [];
 
@@ -115,7 +115,6 @@ class ImportProcessingService
 
     public function processQueueItem(int $id)
     {
-
         //get queue item
         $queueItem = $this->queueService->getQueueEntryById($id);
         if (empty($queueItem)) {
@@ -159,6 +158,7 @@ class ImportProcessingService
     protected function processElement(string $configName, array $importDataRow, Resolver $resolver, array $mapping)
     {
         $element = null;
+        $importDataRowString = implode(', ', $importDataRow);
         try {
             //resolve data object
             $createNew = true;
@@ -193,6 +193,11 @@ class ImportProcessingService
                     $dataTarget = $mappingConfiguration->getDataTarget();
                     $dataTarget->assignData($element, $data);
                 }
+                $this->applicationLogger->info("⭢ Processing DataRow {$importDataRowString}", [
+                    'component' => PimcoreDataImporterBundle::LOGGER_COMPONENT_PREFIX . $configName,
+                    null,
+                    'relatedObject' => $element
+                ]);
 
                 $event = new PreSaveEvent($configName, $importDataRow, $element);
                 $this->eventDispatcher->dispatch($event);
@@ -219,7 +224,7 @@ class ImportProcessingService
                 ]);
             }
         } catch (\Exception $e) {
-            $message = 'Error processing element: ';
+            $message = "Error processing element: {$importDataRowString}";
             $this->logger->error($message . $e);
 
             $this->applicationLogger->error($message . $e->getMessage(), [

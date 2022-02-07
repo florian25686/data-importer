@@ -21,7 +21,7 @@ use Pimcore\Model\Element\ElementInterface;
 class PathStrategy extends AbstractLoad
 {
     /**
-     * @param $identifier
+     * @param string $identifier
      *
      * @return ElementInterface|null
      *
@@ -29,9 +29,8 @@ class PathStrategy extends AbstractLoad
      */
     public function loadElementByIdentifier($identifier): ?ElementInterface
     {
-        $className = $this->getClassName();
-
-        return $className::getByPath($identifier);
+        return $this->dataObjectLoader->loadByPath($identifier,
+                                                   $this->getClassName());
     }
 
     /**

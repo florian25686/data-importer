@@ -75,7 +75,7 @@ class QueueService
         $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
             id bigint AUTO_INCREMENT,
             timestamp bigint NULL,
-            configName varchar(50) NULL,
+            configName varchar(80) NULL,
             `data` TEXT null,
             executionType varchar(20) NULL,
             jobType varchar(20) NULL,
@@ -156,7 +156,7 @@ class QueueService
     }
 
     /**
-     * @param $id
+     * @param int $id
      *
      * @throws \Doctrine\DBAL\DBALException
      */

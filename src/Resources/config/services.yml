@@ -25,7 +25,7 @@ services:
 
 
     Pimcore\Bundle\DataImporterBundle\Queue\QueueService: ~
-    Pimcore\Bundle\DataImporterBundle\Processing\Cron\CronExecutionService: ~
+    Pimcore\Bundle\DataImporterBundle\Processing\ExecutionService: ~
     Pimcore\Bundle\DataImporterBundle\Settings\ConfigurationPreparationService: ~
     Pimcore\Bundle\DataImporterBundle\Preview\PreviewService: ~
     Pimcore\Bundle\DataImporterBundle\EventListener\ConfigurationEventSubscriber: ~
@@ -162,3 +162,14 @@ services:
             - [ setLogger, [ '@logger' ] ]
         tags:
             - { name: monolog.logger, channel: 'DATA-IMPORTER' }
+
+    Pimcore\Bundle\DataImporterBundle\Tool\DataObjectLoader: ~
+
+    # The migration installer needs the bundle it is operating on upon construction to be able to build its migration configuration.
+    # As bundles can't be directly used as service argument, we need to make use of the expression language to fetch the bundle
+    # from the kernel upon construction.
+    Pimcore\Bundle\DataImporterBundle\Installer:
+        public: true
+        arguments:
+            # fetch the bundle via expression language
+            $bundle: "@=service('kernel').getBundle('PimcoreDataImporterBundle')"

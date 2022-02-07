@@ -13,13 +13,13 @@
  *  @license    http://www.pimcore.org/license     GPLv3 and PCL
  */
 
-namespace Pimcore\Bundle\DataImporterBundle\Processing\Cron;
+namespace Pimcore\Bundle\DataImporterBundle\Processing;
 
-use Cron\CronExpression;
+use DateTime;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Pimcore\Db;
 
-class CronExecutionService
+class ExecutionService
 {
     const EXECUTION_STORAGE_TABLE_NAME = 'bundle_data_hub_data_importer_last_cron_execution';
 
@@ -31,73 +31,46 @@ class CronExecutionService
         return Db::get();
     }
 
-    protected function createTableIfNotExisting(\Closure $callable = null)
+    protected function createTableIfNotExisting()
     {
         $this->getDb()->executeQuery(sprintf('CREATE TABLE IF NOT EXISTS %s (
-            configName varchar(50) NOT NULL,
+            configName varchar(80) NOT NULL,
             lastExecutionDate int(11),
             PRIMARY KEY (configName))
         ', self::EXECUTION_STORAGE_TABLE_NAME));
-
-        if ($callable) {
-            return $callable();
-        }
     }
 
-    protected function getLastExecution($configName): \DateTime
+    public function getLastExecution($configName): ?DateTime
     {
         try {
             $timestamp = $this->getDb()->fetchOne(
-                    sprintf('SELECT lastExecutionDate FROM %s WHERE configName = ?', self::EXECUTION_STORAGE_TABLE_NAME),
-                    [$configName]
-                ) ?? time();
+                sprintf('SELECT lastExecutionDate FROM %s WHERE configName = ?',
+                    self::EXECUTION_STORAGE_TABLE_NAME),
+                [$configName]
+            );
 
-            return date_create()->setTimestamp($timestamp);
+            return $timestamp ? date_create()->setTimestamp($timestamp) : null;
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting(function () use ($configName) {
-                $this->getLastExecution($configName);
-            });
+            $this->createTableIfNotExisting();
+
+            return $this->getLastExecution($configName);
         }
     }
 
     /**
-     * @param string $configName
-     * @param string $cronDefinition
-     *
-     * @return bool
-     *
-     * @throws \Exception
-     */
-    public function getNextExecutionInPast(string $configName, string $cronDefinition): bool
-    {
-        $cron = new CronExpression($cronDefinition);
-        $lastExecution = $this->getLastExecution($configName);
-        $nextRun = $cron->getNextRunDate($lastExecution);
-
-        $now = new \DateTime();
-
-        return $nextRun < $now;
-    }
-
-    /**
-     * @param string $configName
-     * @param \DateTime $executionTimestamp
-     *
-     * @return mixed
-     *
      * @throws \Doctrine\DBAL\DBALException
      */
-    public function updateExecutionTimestamp(string $configName, \DateTime $executionTimestamp)
+    public function updateExecutionTimestamp(string $configName, DateTime $executionTimestamp)
     {
         try {
             $this->getDb()->executeQuery(
-                sprintf('INSERT INTO %s (configName, lastExecutionDate) VALUES (?, ?) ON DUPLICATE KEY UPDATE lastExecutionDate = ?', self::EXECUTION_STORAGE_TABLE_NAME),
+                sprintf('INSERT INTO %s (configName, lastExecutionDate) VALUES (?, ?) ON DUPLICATE KEY UPDATE lastExecutionDate = ?',
+                    self::EXECUTION_STORAGE_TABLE_NAME),
                 [$configName, $executionTimestamp->getTimestamp(), $executionTimestamp->getTimestamp()]
             );
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting(function () use ($configName, $executionTimestamp) {
-                $this->updateExecutionTimestamp($configName, $executionTimestamp);
-            });
+            $this->createTableIfNotExisting();
+            $this->updateExecutionTimestamp($configName, $executionTimestamp);
         }
     }
 
@@ -125,7 +98,7 @@ class CronExecutionService
                 [$configName]
             );
         } catch (TableNotFoundException $exception) {
-            return $this->createTableIfNotExisting();
+            $this->createTableIfNotExisting();
         }
     }
 }
